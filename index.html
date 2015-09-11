@@ -3,7 +3,7 @@
     <head>
       <meta charset="utf-8">
       <meta http-equiv="x-ua-compatible" content="ie=edge">
-      <title>Flight Delays</title>
+      <title>Intro To Rx.js</title>
       <meta name="description" content="Flight Delays with Rx.js">
       <meta name="viewport" content="width=device-width, initial-scale=1">
       <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -15,8 +15,20 @@
           <article>
             <header>
               <h1>Consuming an Observable</h1>
-              <pre>let source = Rx.Observable.interval(125)</pre>
             </header>
+            <pre>
+              <code>
+            import {appendResults} from 'utils'
+            import Rx from 'Rx'
+
+            let source = Rx.Observable.interval(125)
+
+            source
+              .filter(x => x % 2 === 0)
+              .map(x => '.')
+              .subscribe(x => appendResults(x, 'results'))
+              </code>
+            </pre>
             <h2>Results</h2>
             <span class="results" id="results"></span>
           </article>
@@ -38,7 +50,26 @@
             <header>
               <h1>Hot Observables</h1>
             </header>
+            <pre>
+              <code>
+            import {appendResults} from 'utils'
+            import Rx from 'Rx'
 
+            let cold = Rx.Observable.interval(500)
+              , hot = Rx.Observable.interval(500).publish().refCount()
+
+            cold.subscribe(x => appendResults(x, 'cold1'))
+            setTimeout(function(){
+              cold.subscribe(x => appendResults(x, 'cold2'))
+            }, 1500)
+
+
+            hot.subscribe(x => appendResults(x, 'hot1'))
+            setTimeout(function(){
+              hot.subscribe(x => appendResults(x, 'hot2'))
+            }, 1500)
+              </code>
+            </pre>
             <h2>Source 1</h2>
             <span id="hot1"></span>
 
@@ -50,18 +81,48 @@
             <header>
               <h1>Creating your own observables</h1>
             </header>
-            <span id='rando'></span>
+            <pre>
+              <code>
+              import {appendResults} from 'utils'
+              import Rx from 'Rx'
+
+              let myObservable = Rx.Observable.create((observer) => {
+
+                let number = Math.random() * 100
+
+                try{
+                  if (number > 100 ){ throw new Error('RandomIsBroken') }
+                } catch(err){
+                  observer.onError(err)
+                }
+
+                observer.onNext(number)
+                observer.onCompleted()
+
+                // disposal function
+                return x => console.log('myObservable has been disposed.')
+              })
+
+              myObservable
+                .subscribe( results => appendResults(results, 'custom')
+                          , err => document.getElementById('custom-error').checked = true
+                          , () => document.getElementById('custom-success').checked = true
+                          )
+
+              </code>
+            </pre>
+            <span id='custom'></span>
             <div>
-              <label for="rando-success">Success</label>
-              <input name="rando-success"
+              <label for="custom-success">Success</label>
+              <input name="custom-success"
                      type="checkbox"
-                     id='rando-success' />
+                     id='custom-success' />
             </div>
             <div>
-              <label for="rando-error">Error</label>
-              <input name="rando-error"
+              <label for="custom-error">Error</label>
+              <input name="custom-error"
                      type="checkbox"
-                     id='rando-error' />
+                     id='custom-error' />
             </div>
           </article>
 
@@ -74,28 +135,42 @@
 
                 <h1>Rest Api</h1>
               </header>
+              <h2>From Scratch</h2>
               <pre>
-               let resAPIObservable = Rx.Observable.create((observer) => {
-                jQuery.getJSON('http://api.openweathermap.org/data/2.5/weather?q=NewYork,us')
+                <code>
+              import {appendResults} from 'utils'
+              import Rx from 'Rx'
+
+              const weatherUrl = 'http://api.openweathermap.org/data/2.5/weather?q=NewYork,us'
+
+
+              let weatherObservable = Rx.Observable.create((observer) => {
+                jQuery.getJSON(weatherUrl)
                 .done((response) => { observer.onNext(response) })
                 .fail((jqXHR, status, error) => { observer.onError(error) })
                 .always(() =>{ observer.onCompleted() })
               })
+
+              weatherObservable.subscribe(result => appendResults(result.weather[0].description, 'weather'))
+                </code>
               </pre>
-              <h3>Weather in NYC</h2>
+              <h2>Weather in NYC</h2>
               <span id="weather"></span>
-            </article>
-            <article>
-              <header>
-                <h1>Automatic Retrying</h1>
-              </header>
+              <h1>With Built-in functions</h1>
               <pre>
-              let flightDelayObservable = Rx.Observable.create((observer) => {
-                jQuery.getJSON('http://services.faa.gov/airport/status/JFK?format=json')
-                .done((response) => { observer.onNext(response) })
-                .fail((jqXHR, status, error) => { observer.onError(error) })
-                .always(() =>{ observer.onCompleted() })
-              })
+                <code>
+              import {appendResults} from 'utils'
+              import Rx from 'Rx'
+
+              const flightUrl = 'http://services.faa.gov/airport/status/JFK?format=json'
+
+
+              // Or we can use fromPromise for convenience
+              let flightDelayObservable = Rx.Observable.fromPromise(jQuery.getJSON(flightUrl))
+
+              flightDelayObservable
+               .subscribe(delays => appendResults(`${delays.status.type}: ${delays.status.reason}`, 'flights'))
+                </code>
               </pre>
               <h3>JFK Flight Delays</h2>
               <span id="flights"></span>
@@ -108,6 +183,33 @@
               <h1>Observables clean up themselves</h1>
               <h2>Disposing of observables</h2>
             </header>
+            <pre>
+              <code>
+                import {appendResults} from 'utils'
+                import Rx from 'Rx'
+
+
+                let toBeDisposedObservable = Rx.Observable.create((observer) => {
+                  let id = setTimeout(() => {
+                    observer.onNext('I made it!')
+                    observer.onCompleted()
+                  }, 1000)
+
+                  // Disposal function
+                  return () => clearTimeout(id)
+                })
+
+
+                let subscription1 = toBeDisposedObservable
+                    .subscribe(x => appendResults(x, 'not-disposed'))
+
+                let subscription2 = toBeDisposedObservable
+                    .subscribe(x => appendResults(x, 'disposed'))
+
+                // Dispose the observable before we can consume it
+                setTimeout(() => { subscription2.dispose() }, 500)
+             </code>
+            </pre>
             <h3>Not disposed</h3>
             <span id="not-disposed"></span>
 
