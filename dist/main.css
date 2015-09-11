@@ -353,6 +353,13 @@ td,
 th {
   padding: 0; }
 
+h1,
+h2,
+h3,
+span,
+.input-container {
+  margin-left: 1rem; }
+
 footer {
   margin-top: 4em;
   text-align: center;
