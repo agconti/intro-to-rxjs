@@ -11,11 +11,11 @@ let weatherObservable = Rx.Observable.create((observer) => {
   .always(() =>{ observer.onCompleted() })
 })
 
-weatherObservable.subscribe(result => appendResults(result.weather[0].description, 'weather'))
+weatherObservable.subscribe(result => appendResults(`${result.name} | ${result.weather[0].description}`, 'weather'))
 
 
 // Or we can use fromPromise for convenience
 let flightDelayObservable = Rx.Observable.fromPromise(jQuery.getJSON(flightUrl))
 
 flightDelayObservable
- .subscribe(delays => appendResults(`${delays.status.type}: ${delays.status.reason}`, 'flights'))
+ .subscribe(delay => appendResults(`JFK | Delay ${delay.delay}: ${delay.status.reason}`, 'flights'))

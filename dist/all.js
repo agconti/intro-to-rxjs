@@ -25,14 +25,14 @@ var weatherObservable = Rx.Observable.create(function (observer) {
 });
 
 weatherObservable.subscribe(function (result) {
-  return appendResults(result.weather[0].description, 'weather');
+  return appendResults(result.name + ' | ' + result.weather[0].description, 'weather');
 });
 
 // Or we can use fromPromise for convenience
 var flightDelayObservable = Rx.Observable.fromPromise(jQuery.getJSON(flightUrl));
 
-flightDelayObservable.subscribe(function (delays) {
-  return appendResults(delays.status.type + ': ' + delays.status.reason, 'flights');
+flightDelayObservable.subscribe(function (delay) {
+  return appendResults('JFK | Delay ' + delay.delay + ': ' + delay.status.reason, 'flights');
 });
 'use strict';
 
@@ -112,6 +112,11 @@ setTimeout(function () {
     return appendResults(x, 'hot2');
   });
 }, 1500);
+
+// Syntax Highlighting
+"use strict";
+
+hljs.initHighlightingOnLoad();
 "use strict";
 
 function appendResults(val, resultsDiv) {

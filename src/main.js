@@ -1,0 +1,3 @@
+
+// Syntax Highlighting
+hljs.initHighlightingOnLoad();
