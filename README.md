@@ -11,7 +11,7 @@ A visual introduction in the basic concepts of Rx.js
 Install dependencies:
 
 ```bash
-npm Install
+npm install
 ```
 
 Start development server:
